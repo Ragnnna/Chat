@@ -46,11 +46,12 @@ const Register = () => {
         data: user
       }))
       ws.onmessage = (m) => {
-        const { message, errors, accessToken } = JSON.parse(m.data)
-        console.log(message)
+        const { message, errors, accessToken, id } = JSON.parse(m.data)
+        console.log(id)
         if(message === 'error'){
           return setError(errors[0])
         }
+        context.setUID(id)
         context.setToken(accessToken)
         history.push('/')
       }

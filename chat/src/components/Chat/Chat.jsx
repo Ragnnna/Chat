@@ -8,28 +8,26 @@ import InfoIcon from '@material-ui/icons/Info'
 import BlockIcon from '@material-ui/icons/Block'
 import VolumeOffIcon from '@material-ui/icons/VolumeOff'
 import { UserContext } from '../../App'
+import { useHistory } from 'react-router-dom'
+import { useCustomConnection } from '../../hooks/useCustomConnection'
 
 const Chat = () => {
+  const { users } = useSelector(state => state.users)
   const context = useContext(UserContext)
+  const history = useHistory()
   const dispatch = useDispatch()
   const { messages } = useSelector(state => state.messages)
-  const [connection, setConnection] = useState(null)
   const [ userData, setUserData ] = useState({
     author: 'Me',
     message: ''
   })
-
+  const userId = history.location.pathname.split('/chat/')[1]
+  const { connection } = useCustomConnection('ws://localhost:8200', context.token)
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8200')
-    ws.onopen = () => {
-      ws.send(JSON.stringify({ 
-        type: 'VERIFY-USER',
-        data: context.token 
-      }))
-      setConnection(ws)
+    if(connection){
+      connection.send(JSON.stringify({ type: 'FETCH_USER', data: userId }))
     }
-    return () => ws.close()
-  }, [])
+  }, [connection, userId])
 
   const mappedMessages = messages
   .map(el =>
@@ -48,7 +46,14 @@ const Chat = () => {
           message: ''
         }))
       }
-      connection.send(JSON.stringify(userData))
+      connection.send(JSON.stringify({
+        type: 'SEND_MESSAGE',
+        data: {
+          ids: [userId, context.UID],
+          dateAdd: Date.now(),
+          message: userData.message
+        }
+      }))
       connection.onmessage = async(m) => {
         dispatch({ 
           type: SET_MESSAGES,

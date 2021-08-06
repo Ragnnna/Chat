@@ -2,10 +2,13 @@ import React, { useState } from 'react'
 import '../components.css'
 import SettingsIcon from '@material-ui/icons/Settings';
 import { SettingsModal } from './SettingsModal';
+import { useHistory } from 'react-router-dom';
 
 const Header = () => {
+  const history = useHistory()
   const [settings, setSettings] = useState(false)
 
+  const goToMainPage = () => history.push('/')
   const handleOpenSettings = () => {
     setSettings(!settings)
   }
@@ -21,7 +24,9 @@ const Header = () => {
   return (
     <div className="main-header">
       <div className="title-header-block">
-        <p className="title-header">Messaging</p>
+        <p
+        onClick={goToMainPage}
+        className="title-header">Messaging</p>
       </div>
       <div className="settings-header-block">
         <p 

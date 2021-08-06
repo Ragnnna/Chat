@@ -15,7 +15,6 @@ wss.on('connection', async (wsClient) => {
   wsClient.on('message', async (m) => {
     const { type, data } = JSON.parse(m)
     userAction(type, data, wsClient)
-    console.log(data)
   })
   
   wsClient.on('close', () => {

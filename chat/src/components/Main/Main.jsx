@@ -3,6 +3,8 @@ import { Chat } from '../Chat/Chat'
 import '../components.css'
 import { Header } from '../Header/Header'
 import { Sidebar } from '../Sidebar/Sidebar'
+import { Switch, Route, Redirect } from 'react-router-dom'
+import { Empty } from '../Empty'
 
 const Main = () => {
   
@@ -11,7 +13,11 @@ const Main = () => {
       <Header />
       <div className="content-bar">
         <Sidebar />
-        <Chat />
+        <Switch>
+          <Route exact path="/" render={() => <Empty />}/>
+          <Route exact path="/chat/:id" render={() => <Chat />}/>
+          <Redirect from="*" to="/"/>
+        </Switch>
       </div>
     </div>
   )
