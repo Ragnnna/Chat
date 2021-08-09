@@ -9,11 +9,10 @@ import BlockIcon from '@material-ui/icons/Block'
 import VolumeOffIcon from '@material-ui/icons/VolumeOff'
 import { UserContext } from '../../App'
 import { useHistory } from 'react-router-dom'
-import { useCustomConnection } from '../../hooks/useCustomConnection'
 
 const Chat = () => {
-  const { users } = useSelector(state => state.users)
   const context = useContext(UserContext)
+  const [connection, setConnection] = useState(null)
   const history = useHistory()
   const dispatch = useDispatch()
   const { messages } = useSelector(state => state.messages)
@@ -22,12 +21,37 @@ const Chat = () => {
     message: ''
   })
   const userId = history.location.pathname.split('/chat/')[1]
-  const { connection } = useCustomConnection('ws://localhost:8200', context.token)
   useEffect(() => {
-    if(connection){
-      connection.send(JSON.stringify({ type: 'FETCH_USER', data: userId }))
+    const ws = new WebSocket('ws://localhost:8200')
+    ws.onopen = () => {
+      ws.send(JSON.stringify({
+        type: 'VERIFY_USER',
+        data: context.token
+      }))
+      ws.onmessage = (m) => {
+        const message = JSON.parse(m.data)
+        setConnection(ws)
+        if(message === 'Invalid Token'){
+          return ws.close()
+        }
+      }
     }
-  }, [connection, userId])
+    return () => ws.close()
+  }, [context.token, userId])
+
+  useEffect(() => {
+    console.log(context.UID)
+    const ws = new WebSocket('ws://localhost:8200')
+    ws.onopen = () => {
+      ws.send(JSON.stringify({
+        type: 'GET_CHAT_BY_ID',
+        data: context.UID
+      }))
+      ws.onmessage = (m) => {
+        console.log(JSON.parse(m.data))
+      }
+    }
+  }, [])
 
   const mappedMessages = messages
   .map(el =>
@@ -50,11 +74,17 @@ const Chat = () => {
         type: 'SEND_MESSAGE',
         data: {
           ids: [userId, context.UID],
-          dateAdd: Date.now(),
-          message: userData.message
+          message: {
+            text: userData.message,
+            dateAdd: Date.now(),
+            edited: false,
+            to: userId,
+            from: context.UID
+          }
         }
       }))
       connection.onmessage = async(m) => {
+        console.log(JSON.parse(m.data))
         dispatch({ 
           type: SET_MESSAGES,
           payload: JSON.parse(m.data)
